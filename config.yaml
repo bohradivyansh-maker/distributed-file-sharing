@@ -8,7 +8,7 @@ server:
     port: 5001       # Client connection port
     replication_port: 5003  # Port for receiving replication data
     heartbeat_port: 5004    # Port for heartbeat messages
-    ip: "10.160.68.45"      # Main server's public IP (used by clients)
+    ip: "127.0.0.1"         # Main server's IP (localhost for local testing)
   
   # Backup Server Configuration
   backup:
@@ -16,7 +16,7 @@ server:
     port: 5001
     replication_port: 5003
     heartbeat_port: 5004
-    ip: "10.160.67.237"     # Backup server's public IP
+    ip: "127.0.0.1"         # Backup server's IP (localhost for local testing)
     heartbeat_timeout: 6     # Seconds before considering main server down
 
 # Client Configuration
