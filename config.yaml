@@ -1,0 +1,57 @@
+# Configuration file for Distributed File Sharing System
+# Update these values based on your deployment environment
+
+server:
+  # Main Server Configuration
+  main:
+    host: "0.0.0.0"  # Bind to all interfaces
+    port: 5001       # Client connection port
+    replication_port: 5003  # Port for receiving replication data
+    heartbeat_port: 5004    # Port for heartbeat messages
+    ip: "10.160.68.45"      # Main server's public IP (used by clients)
+  
+  # Backup Server Configuration
+  backup:
+    host: "0.0.0.0"
+    port: 5001
+    replication_port: 5003
+    heartbeat_port: 5004
+    ip: "10.160.67.237"     # Backup server's public IP
+    heartbeat_timeout: 6     # Seconds before considering main server down
+
+# Client Configuration
+client:
+  seeder_port: 6000  # Port for peer-to-peer seeding
+  download_path: "./downloads"  # Default download directory
+  retry_attempts: 3  # Number of retry attempts for failed downloads
+  retry_delay: 2     # Seconds between retries
+
+# File Transfer Settings
+transfer:
+  chunk_size: 1048576  # 1 MB (1024 * 1024 bytes)
+  max_connections: 10   # Maximum concurrent connections
+  timeout: 30          # Socket timeout in seconds
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  log_to_file: true
+  log_file: "logs/app.log"
+  max_bytes: 10485760  # 10 MB
+  backup_count: 5      # Keep 5 backup log files
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Database Configuration
+database:
+  path: "data/files.db"
+  enable_persistence: true
+
+# Security (Future enhancement)
+security:
+  enable_encryption: false
+  enable_authentication: false
+
+# Performance Metrics
+metrics:
+  enable: true
+  update_interval: 5  # Seconds between metric updates

@@ -1,0 +1,27 @@
+# Core Dependencies for Distributed File Sharing System
+# Python 3.7+
+
+# Configuration Management
+PyYAML>=6.0
+
+# Database (included in Python standard library)
+# sqlite3
+
+# GUI (included in Python standard library)
+# tkinter
+
+# Testing (Optional - for development)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Code Quality (Optional - for development)
+pylint>=2.15.0
+black>=22.0.0
+
+# Note: This project primarily uses Python standard library modules:
+# - socket (networking)
+# - threading (concurrency)
+# - tkinter (GUI)
+# - sqlite3 (database)
+# - hashlib (checksums)
+# - logging (structured logging)
