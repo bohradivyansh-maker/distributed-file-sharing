@@ -326,10 +326,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-**Your Name**  
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your Name](https://linkedin.com/in/yourprofile)
-- Email: your.email@example.com
+**Divyansh Bohra**  
+- GitHub: [@bohradivyansh-maker](https://github.com/bohradivyansh-maker)
+- LinkedIn: [Divyansh Bohra](https://www.linkedin.com/in/divyansh-bohra-99414a349/)
+- Email: bohradivyansh123@gmail.com
 
 ## 🙏 Acknowledgments
 
