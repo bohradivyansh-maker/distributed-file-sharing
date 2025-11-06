@@ -38,8 +38,8 @@ class MainFileServerApp:
     def __init__(self, master):
         self.master = master
         master.title("MiniTorrent - Main Server")
-        master.geometry("800x600")
-        master.configure(bg="#f0f8ff")
+        master.geometry("850x650")
+        master.configure(bg="#f5f7fa")
 
         # Data dictionaries (with database persistence)
         self.files = {}            # filename -> list of chunks
@@ -55,56 +55,61 @@ class MainFileServerApp:
             metrics.start_periodic_logging()
             logger.info("Metrics collection started")
 
-        # --- Animated Status Label ---
-        self.status_label = tk.Label(master, text="SERVER NOT RUNNING", font=("Helvetica", 18, "bold"), bg="#f0f8ff")
-        self.status_label.pack(pady=10)
+        # --- Header Frame ---
+        header_frame = tk.Frame(master, bg="#2c3e50", height=100)
+        header_frame.pack(fill=tk.X, pady=0)
+        header_frame.pack_propagate(False)
+        
+        title_label = tk.Label(header_frame, text="MiniTorrent Server", 
+                              font=("Segoe UI", 20, "bold"), bg="#2c3e50", fg="white")
+        title_label.pack(pady=(15, 5))
+        
+        # --- Status Label (Static, not animated) ---
+        self.status_label = tk.Label(header_frame, text="● SERVER NOT RUNNING", 
+                                     font=("Segoe UI", 11), bg="#2c3e50", fg="#e74c3c")
+        self.status_label.pack(pady=(0, 15))
         self.server_started = False
-        self.animate_status_label(0)
 
-        # --- Animated Banner ---
-        self.banner_label = tk.Label(master, text="", font=("Helvetica", 14, "bold"), bg="#f0f8ff")
-        self.banner_label.pack(side=tk.BOTTOM, pady=10)
-        self.banner_index = 0
-        self.animate_banner()
+        # --- Button Frame ---
+        button_frame = tk.Frame(master, bg="#f5f7fa")
+        button_frame.pack(pady=20)
 
-        # --- Buttons ---
-        self.select_button = tk.Button(master, text="Add Files", font=("Helvetica", 12, "bold"),
-                                       command=self.select_files, bg="#4CAF50", fg="white")
-        self.select_button.pack(pady=5)
+        # Modern styled buttons
+        self.select_button = tk.Button(button_frame, text="📁 Add Files", font=("Segoe UI", 11, "bold"),
+                                       command=self.select_files, bg="#3498db", fg="white",
+                                       bd=0, padx=30, pady=12, cursor="hand2", relief=tk.FLAT)
+        self.select_button.pack(side=tk.LEFT, padx=10)
+        self.select_button.bind("<Enter>", lambda e: self.select_button.config(bg="#2980b9"))
+        self.select_button.bind("<Leave>", lambda e: self.select_button.config(bg="#3498db"))
 
-        self.start_button = tk.Button(master, text="Start Server", font=("Helvetica", 12, "bold"),
-                                      command=self.start_server, bg="#2196F3", fg="white")
-        self.start_button.pack(pady=5)
+        self.start_button = tk.Button(button_frame, text="▶ Start Server", font=("Segoe UI", 11, "bold"),
+                                      command=self.start_server, bg="#27ae60", fg="white",
+                                      bd=0, padx=30, pady=12, cursor="hand2", relief=tk.FLAT)
+        self.start_button.pack(side=tk.LEFT, padx=10)
+        self.start_button.bind("<Enter>", lambda e: self.start_button.config(bg="#229954"))
+        self.start_button.bind("<Leave>", lambda e: self.start_button.config(bg="#27ae60"))
 
         # --- Listbox to show files ---
-        self.file_listbox = tk.Listbox(master, height=6, font=("Helvetica", 12))
-        self.file_listbox.pack(padx=10, pady=10, fill=tk.X)
+        list_label = tk.Label(master, text="📂 Files in Server:", font=("Segoe UI", 11, "bold"), 
+                             bg="#f5f7fa", fg="#2c3e50")
+        list_label.pack(padx=10, pady=(10, 5), anchor=tk.W)
+        
+        self.file_listbox = tk.Listbox(master, height=6, font=("Segoe UI", 10),
+                                       bg="white", fg="#2c3e50", bd=1, relief=tk.SOLID)
+        self.file_listbox.pack(padx=10, pady=5, fill=tk.X)
 
         # --- Log Area ---
-        self.log_area = scrolledtext.ScrolledText(master, height=15, width=90, font=("Courier", 10))
-        self.log_area.pack(padx=10, pady=10)
-        self.animate_log_bg()
+        log_label = tk.Label(master, text="📋 Activity Log:", font=("Segoe UI", 11, "bold"),
+                            bg="#f5f7fa", fg="#2c3e50")
+        log_label.pack(padx=10, pady=(10, 5), anchor=tk.W)
+        
+        self.log_area = scrolledtext.ScrolledText(master, height=15, width=90, 
+                                                  font=("Consolas", 9), bg="#ffffff",
+                                                  fg="#2c3e50", bd=1, relief=tk.SOLID)
+        self.log_area.pack(padx=10, pady=5)
 
         # Start heartbeat thread (to send heartbeat messages to backup server)
         threading.Thread(target=self.send_heartbeat, daemon=True).start()
-
-    def animate_status_label(self, idx):
-        color = RAINBOW_COLORS[idx % len(RAINBOW_COLORS)]
-        text = "SERVER RUNNING" if self.server_started else "SERVER NOT RUNNING"
-        self.status_label.config(text=text, fg=color)
-        self.master.after(300, lambda: self.animate_status_label(idx + 1))
-
-    def animate_banner(self):
-        message = BANNER_MESSAGES[self.banner_index % len(BANNER_MESSAGES)]
-        self.banner_label.config(text=message, fg=RAINBOW_COLORS[self.banner_index % len(RAINBOW_COLORS)])
-        self.banner_index += 1
-        self.master.after(2500, self.animate_banner)
-
-    def animate_log_bg(self):
-        current = self.log_area.cget("bg")
-        new_color = "#f0f8ff" if current == "#e6f2ff" else "#e6f2ff"
-        self.log_area.config(bg=new_color)
-        self.master.after(1500, self.animate_log_bg)
 
     def log(self, msg):
         self.log_area.insert(tk.END, msg + "\n")
@@ -136,6 +141,10 @@ class MainFileServerApp:
 
     def select_files(self):
         filenames = filedialog.askopenfilenames()
+        if not filenames:
+            return
+            
+        files_added = False
         for filepath in filenames:
             filename = os.path.basename(filepath)
             if filename not in self.files:
@@ -162,8 +171,14 @@ class MainFileServerApp:
 
                 # Replicate file to backup server
                 threading.Thread(target=self.replicate_file, args=(filename, filepath, chunks, checksums), daemon=True).start()
+                files_added = True
             else:
                 self.log(f"{filename} is already added.")
+        
+        # Auto-start server if files were added and server not running
+        if files_added and not self.server_started:
+            self.log("Auto-starting server...")
+            self.start_server()
 
     def split_file(self, filepath):
         chunks = []
@@ -181,27 +196,57 @@ class MainFileServerApp:
         return chunks
 
     def show_file_added_banner(self, filename):
-        banner = tk.Label(self.master, text=f"File '{filename}' added!", font=("Helvetica", 14, "bold"),
-                          fg="white", bg="#f44336")
-        banner.place(relx=1.0, rely=0.2, anchor="e")
-        def slide_left(pos):
-            if pos > 0.5:
-                banner.place_configure(relx=pos)
-                self.master.after(30, lambda: slide_left(pos - 0.02))
-            else:
-                self.fade_out(banner, 100)
-        slide_left(1.0)
-
-    def fade_out(self, widget, alpha):
-        if alpha <= 0:
-            widget.destroy()
-        else:
-            hex_alpha = format(alpha, '02x')
-            widget.config(bg="#" + hex_alpha*3)
-            self.master.after(50, lambda: self.fade_out(widget, alpha - 10))
+        """Show professional popup notification for file upload"""
+        popup = tk.Toplevel(self.master)
+        popup.title("Upload Successful")
+        popup.geometry("400x150")
+        popup.configure(bg="white")
+        popup.resizable(False, False)
+        
+        # Center the window
+        popup.transient(self.master)
+        popup.grab_set()
+        
+        # Success icon and message frame
+        content_frame = tk.Frame(popup, bg="white")
+        content_frame.pack(expand=True, fill=tk.BOTH, padx=20, pady=20)
+        
+        # Green checkmark
+        check_label = tk.Label(content_frame, text="✓", font=("Segoe UI", 48), 
+                              bg="white", fg="#27ae60")
+        check_label.pack()
+        
+        # Success message
+        msg_label = tk.Label(content_frame, text="File uploaded successfully!", 
+                           font=("Segoe UI", 12, "bold"), bg="white", fg="#2c3e50")
+        msg_label.pack(pady=(5, 2))
+        
+        # Filename
+        file_label = tk.Label(content_frame, text=filename, 
+                            font=("Segoe UI", 10), bg="white", fg="#7f8c8d")
+        file_label.pack()
+        
+        # OK button
+        ok_btn = tk.Button(popup, text="OK", font=("Segoe UI", 10, "bold"),
+                          bg="#3498db", fg="white", bd=0, padx=30, pady=8,
+                          cursor="hand2", relief=tk.FLAT, command=popup.destroy)
+        ok_btn.pack(pady=(0, 15))
+        ok_btn.bind("<Enter>", lambda e: ok_btn.config(bg="#2980b9"))
+        ok_btn.bind("<Leave>", lambda e: ok_btn.config(bg="#3498db"))
+        
+        # Auto-close after 3 seconds
+        popup.after(3000, popup.destroy)
+        
+        # Center on parent
+        popup.update_idletasks()
+        x = self.master.winfo_x() + (self.master.winfo_width() // 2) - (popup.winfo_width() // 2)
+        y = self.master.winfo_y() + (self.master.winfo_height() // 2) - (popup.winfo_height() // 2)
+        popup.geometry(f"+{x}+{y}")
 
     def start_server(self):
         self.server_started = True
+        self.status_label.config(text="● SERVER RUNNING", fg="#27ae60")
+        self.start_button.config(state=tk.DISABLED, bg="#95a5a6")
         threading.Thread(target=self.run_server, daemon=True).start()
         self.log(f"Server started on port {SERVER_PORT}...")
 

@@ -81,12 +81,20 @@ class EduShareClientApp:
         self.master = master
         master.title("EduShare File Sharing Client")
         master.geometry("900x700")
-        master.configure(bg="#f9f9ff")
+        master.configure(bg="#f5f7fa")
+        
+        # Track animation callbacks for cleanup
+        self._animation_ids = []
+        self._is_closing = False
 
-        self.header_label = tk.Label(master, text="Welcome to EduShare – Your Academic File Hub!",
-                                     font=("Helvetica", 20, "bold"), bg="#f9f9ff")
-        self.header_label.pack(pady=15)
-        self.bounce_header(0, 0)
+        # --- Header Frame ---
+        header_frame = tk.Frame(master, bg="#34495e", height=70)
+        header_frame.pack(fill=tk.X, pady=0)
+        header_frame.pack_propagate(False)
+        
+        self.header_label = tk.Label(header_frame, text="📚 EduShare - Academic File Sharing",
+                                     font=("Segoe UI", 18, "bold"), bg="#34495e", fg="white")
+        self.header_label.pack(pady=20)
 
         # Ask for server choice: primary or backup? (Client will try primary then fallback)
         self.server_ip = MAIN_SERVER_IP
@@ -94,48 +102,71 @@ class EduShareClientApp:
         # File lists
         self.full_file_list = []
         self.filtered_files = []
+        
+        # Bind cleanup on window close
+        master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         # --- Search Frame ---
-        self.search_frame = tk.Frame(master, bg="#f9f9ff")
-        self.search_frame.pack(fill="both", expand=True)
+        self.search_frame = tk.Frame(master, bg="#f5f7fa")
+        self.search_frame.pack(fill="both", expand=True, padx=15, pady=15)
 
-        search_bar_frame = tk.Frame(self.search_frame, bg="#f9f9ff")
-        search_bar_frame.pack(pady=5)
-        tk.Label(search_bar_frame, text="Search Files:", font=("Helvetica", 12), bg="#f9f9ff").pack(side=tk.LEFT, padx=5)
+        # Search bar with modern styling
+        search_bar_frame = tk.Frame(self.search_frame, bg="#f5f7fa")
+        search_bar_frame.pack(pady=(0, 10))
+        
+        tk.Label(search_bar_frame, text="🔍", font=("Segoe UI", 14), bg="#f5f7fa").pack(side=tk.LEFT, padx=(0, 5))
+        
         self.search_var = tk.StringVar()
-        self.search_entry = tk.Entry(search_bar_frame, textvariable=self.search_var, width=45)
+        self.search_entry = tk.Entry(search_bar_frame, textvariable=self.search_var, width=50,
+                                     font=("Segoe UI", 11), bd=1, relief=tk.SOLID)
         self.search_entry.pack(side=tk.LEFT, padx=5)
-        tk.Button(search_bar_frame, text="Search", command=self.on_search, bg="#673ab7", fg="white").pack(side=tk.LEFT, padx=5)
-        tk.Button(search_bar_frame, text="Refresh", command=self.refresh_file_list, bg="#009688", fg="white").pack(side=tk.LEFT, padx=5)
+        
+        search_btn = tk.Button(search_bar_frame, text="Search", command=self.on_search, 
+                              bg="#5e72e4", fg="white", font=("Segoe UI", 10, "bold"),
+                              bd=0, padx=20, pady=8, cursor="hand2", relief=tk.FLAT)
+        search_btn.pack(side=tk.LEFT, padx=5)
+        search_btn.bind("<Enter>", lambda e: search_btn.config(bg="#4c63d2"))
+        search_btn.bind("<Leave>", lambda e: search_btn.config(bg="#5e72e4"))
+        
+        refresh_btn = tk.Button(search_bar_frame, text="🔄 Refresh", command=self.refresh_file_list, 
+                               bg="#11cdef", fg="white", font=("Segoe UI", 10, "bold"),
+                               bd=0, padx=20, pady=8, cursor="hand2", relief=tk.FLAT)
+        refresh_btn.pack(side=tk.LEFT, padx=5)
+        refresh_btn.bind("<Enter>", lambda e: refresh_btn.config(bg="#0da5c0"))
+        refresh_btn.bind("<Leave>", lambda e: refresh_btn.config(bg="#11cdef"))
 
+        # File tree
         columns = ("Name", "Size (bytes)", "Downloads")
-        self.file_tree = ttk.Treeview(self.search_frame, columns=columns, show="headings", selectmode="extended", height=10)
+        self.file_tree = ttk.Treeview(self.search_frame, columns=columns, show="headings", selectmode="extended", height=15)
         for col in columns:
             self.file_tree.heading(col, text=col)
             self.file_tree.column(col, width=250)
-        self.file_tree.pack(padx=10, pady=10, fill="both", expand=True)
+        self.file_tree.pack(padx=0, pady=10, fill="both", expand=True)
 
-        tk.Button(self.search_frame, text="Download Selected Files", command=self.on_download,
-                  bg="#3f51b5", fg="white", font=("Helvetica", 12, "bold")).pack(pady=10)
+        # Download button
+        download_btn = tk.Button(self.search_frame, text="⬇ Download Selected Files", command=self.on_download,
+                  bg="#2dce89", fg="white", font=("Segoe UI", 12, "bold"),
+                  bd=0, padx=30, pady=12, cursor="hand2", relief=tk.FLAT)
+        download_btn.pack(pady=10)
+        download_btn.bind("<Enter>", lambda e: download_btn.config(bg="#24a46d"))
+        download_btn.bind("<Leave>", lambda e: download_btn.config(bg="#2dce89"))
 
         # Start a seeder thread so that once files are downloaded, this client can serve chunks to peers.
         threading.Thread(target=self.start_seeder, daemon=True).start()
 
         # Fetch file list from server (try primary; fallback to backup if needed)
         self.refresh_file_list()
-
-    def bounce_header(self, delta, direction):
-        y = self.header_label.winfo_y()
-        new_y = y + direction * 2
-        if new_y < 10 or new_y > 50:
-            direction = -direction
-        self.header_label.place(x=10, y=new_y)
-        self.master.after(50, lambda: self.bounce_header(delta+1, direction))
-        self.animate_header_color(delta)
-
-    def animate_header_color(self, idx):
-        colors = ["#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#03a9f4"]
-        self.header_label.config(fg=colors[idx % len(colors)])
+    
+    def on_closing(self):
+        """Clean up resources before closing"""
+        self._is_closing = True
+        # Cancel all pending animations
+        for callback_id in self._animation_ids:
+            try:
+                self.master.after_cancel(callback_id)
+            except:
+                pass
+        self.master.destroy()
 
     def refresh_file_list(self):
         # Try main server first
@@ -185,35 +216,72 @@ class EduShareClientApp:
         self.start_download_window(file, save_path, lambda: self.download_sequence(files, index+1))
 
     def start_download_window(self, file, save_path, callback):
+        """Modern compact download progress window"""
         win = tk.Toplevel(self.master)
-        win.title(f"Downloading: {file['name']}")
-        win.geometry("600x300")
-        win.configure(bg="#ffffff")
+        win.title("Downloading")
+        win.geometry("350x180")
+        win.configure(bg="white")
+        win.resizable(False, False)
+        
+        # Center the window
+        win.transient(self.master)
+        
+        # Track callbacks for this window
+        win_callbacks = []
+        
+        def safe_after(delay, func):
+            """Wrapper to track after() callbacks"""
+            try:
+                callback_id = win.after(delay, func)
+                win_callbacks.append(callback_id)
+                return callback_id
+            except:
+                return None
+        
+        def cleanup_window():
+            """Cancel all pending callbacks before closing"""
+            for cb_id in win_callbacks:
+                try:
+                    win.after_cancel(cb_id)
+                except:
+                    pass
+            try:
+                win.destroy()
+            except:
+                pass
+        
+        win.protocol("WM_DELETE_WINDOW", cleanup_window)
 
-        status_label = tk.Label(win, text=f"Downloading '{file['name']}'...", font=("Helvetica", 14), bg="#ffffff")
-        status_label.pack(pady=10)
-
-        progress = ttk.Progressbar(win, orient="horizontal", length=500, mode="determinate")
-        progress.pack(pady=10)
-        percent_label = tk.Label(win, text="0%", font=("Helvetica", 12), bg="#ffffff")
-        percent_label.pack(pady=5)
-
-        # Circular progress indicator (optional)
-        circle_canvas = tk.Canvas(win, width=100, height=100, bg="#ffffff", highlightthickness=0)
-        circle_canvas.pack(pady=10)
-        circle_canvas.create_oval(10, 10, 90, 90, outline="#cccccc", width=8)
-        progress_arc = circle_canvas.create_arc(10, 10, 90, 90, start=90, extent=0, outline="#3f51b5", width=8, style="arc")
-
-        def update_circle(percent):
-            extent = (percent/100) * -360
-            circle_canvas.itemconfig(progress_arc, extent=extent)
+        # Content frame
+        content_frame = tk.Frame(win, bg="white")
+        content_frame.pack(expand=True, fill=tk.BOTH, padx=20, pady=20)
+        
+        # Status icon (will change to checkmark on completion)
+        status_icon = tk.Label(content_frame, text="⏬", font=("Segoe UI", 32), 
+                              bg="white", fg="#3498db")
+        status_icon.pack()
+        
+        # Filename
+        name_label = tk.Label(content_frame, text=file['name'], 
+                            font=("Segoe UI", 10, "bold"), bg="white", fg="#2c3e50",
+                            wraplength=300)
+        name_label.pack(pady=(5, 10))
+        
+        # Progress bar
+        progress = ttk.Progressbar(content_frame, orient="horizontal", length=280, mode="determinate")
+        progress.pack()
+        
+        # Percentage label
+        percent_label = tk.Label(content_frame, text="0%", font=("Segoe UI", 9), 
+                                bg="white", fg="#7f8c8d")
+        percent_label.pack(pady=(5, 0))
 
         def download_current():
             # Get chunk count from the active server
             chunk_count = get_chunk_count(self.server_ip, file["name"])
             if chunk_count <= 0:
-                win.after(0, lambda: messagebox.showerror("Error", f"No chunks available for {file['name']}"))
-                win.after(0, win.destroy)
+                safe_after(0, lambda: messagebox.showerror("Error", f"No chunks available for {file['name']}"))
+                safe_after(0, cleanup_window)
                 callback()
                 return
             bytes_downloaded = 0
@@ -228,24 +296,25 @@ class EduShareClientApp:
                             percent = int((bytes_downloaded / total_bytes) * 100)
                             if percent > 100:
                                 percent = 100
-                            win.after(0, lambda p=percent: percent_label.config(text=f"{p}%"))
-                            win.after(0, lambda: progress.configure(value=bytes_downloaded))
-                            win.after(0, lambda p=percent: update_circle(p))
+                            safe_after(0, lambda p=percent: percent_label.config(text=f"{p}%"))
+                            safe_after(0, lambda bw=bytes_downloaded, tb=total_bytes: progress.configure(value=bw, maximum=tb))
                         else:
-                            win.after(0, lambda: messagebox.showerror("Error", f"Failed at chunk {i}"))
-                            win.after(0, win.destroy)
+                            safe_after(0, lambda: messagebox.showerror("Error", f"Failed at chunk {i}"))
+                            safe_after(0, cleanup_window)
                             callback()
                             return
             except Exception as e:
-                win.after(0, lambda: messagebox.showerror("Error", f"Download error: {e}"))
-                win.after(0, win.destroy)
+                safe_after(0, lambda: messagebox.showerror("Error", f"Download error: {e}"))
+                safe_after(0, cleanup_window)
                 callback()
                 return
 
-            win.after(0, lambda: progress.configure(value=total_bytes))
-            win.after(0, lambda: percent_label.config(text="100%"))
-            win.after(0, lambda: status_label.config(text="Download complete!"))
-            win.after(3000, lambda: (win.destroy(), callback()))
+            # Download complete - show success
+            safe_after(0, lambda: progress.configure(value=total_bytes, maximum=total_bytes))
+            safe_after(0, lambda: percent_label.config(text="Complete!"))
+            safe_after(0, lambda: status_icon.config(text="✓", fg="#27ae60"))
+            safe_after(0, lambda: name_label.config(text="Download successful!"))
+            safe_after(2000, lambda: (cleanup_window(), callback()))
             # After download, add file to seeder list
             self.add_seeder_file(file["name"], save_path)
 
