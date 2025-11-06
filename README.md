@@ -15,7 +15,7 @@ A fault-tolerant distributed file sharing system built with Python, featuring pr
 - [Usage](#usage)
 - [Project Structure](#project-structure)
 - [System Design](#system-design)
-- [CV Highlights](#cv-highlights)
+- [Testing](#testing)
 - [Future Enhancements](#future-enhancements)
 - [Contributing](#contributing)
 - [License](#license)
@@ -248,30 +248,7 @@ Every 2 seconds:      "heartbeat"
 3. Backup binds to port 5001 and serves clients
 4. Clients automatically retry and connect to backup
 
-## 💼 CV Highlights
-
-This project demonstrates:
-
-✅ **Distributed Systems Design**: Primary-backup architecture with automatic failover  
-✅ **Network Programming**: Custom TCP protocol design and socket programming  
-✅ **Data Reliability**: SHA256 hash verification for distributed data integrity  
-✅ **Database Management**: SQLite for persistent state management  
-✅ **Configuration Management**: Environment-agnostic deployment with YAML  
-✅ **Production-Ready Code**: Structured logging, error handling, metrics  
-✅ **Concurrency**: Multi-threaded server handling concurrent clients  
-✅ **Software Engineering**: Modular design, separation of concerns, DRY principles  
-
-### Resume Bullet Points
-
-> **Distributed File Sharing System** | Python, Socket Programming, SQLite  
-> - Architected fault-tolerant distributed system with primary-backup replication and automatic failover mechanism  
-> - Implemented chunked file transfer protocol with SHA256 integrity verification across distributed nodes  
-> - Designed configuration-driven deployment supporting multi-environment setups with YAML  
-> - Built persistent storage layer using SQLite for stateful metadata management  
-> - Integrated structured logging framework with rotation for production monitoring  
-> - Developed connection pooling and exponential backoff for resilient network operations  
-
-## 🔮 Future Enhancements
+##  Future Enhancements
 
 - [ ] End-to-end encryption (TLS/SSL)
 - [ ] User authentication and authorization
@@ -334,8 +311,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - Inspired by BitTorrent protocol
-- Built for educational purposes
-- Designed for academic file sharing use cases
+- Educational distributed systems project
 
 ---
 
